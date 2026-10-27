@@ -1,0 +1,52 @@
+# Public, independent re-verification of every checkpoint:
+#  - on every push (signatures, single signer, increasing heights, prev links)
+#  - daily against the live chain (each checkpointed block hash must still be served)
+name: verify
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 3 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout checkpoints
+        uses: actions/checkout@v4
+        with:
+          path: checkpoints-repo
+
+      - name: Checkout verifier (jokeez/hackme)
+        uses: actions/checkout@v4
+        with:
+          repository: jokeez/hackme
+          path: hackme
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: hackme/go.mod
+          cache-dependency-path: hackme/go.sum
+
+      - name: Any checkpoints yet?
+        id: have
+        run: |
+          n=$(ls checkpoints-repo/checkpoints/*.json 2>/dev/null | wc -l)
+          echo "count=$n" >> "$GITHUB_OUTPUT"
+          echo "checkpoints: $n"
+
+      - name: Signatures and links
+        if: steps.have.outputs.count != '0'
+        working-directory: hackme
+        run: go run ./cmd/checkpoint verify -dir ../checkpoints-repo/checkpoints -signer HMC-dfc143732a1fc3bc
+
+      - name: Block hashes vs live chain
+        if: steps.have.outputs.count != '0'
+        working-directory: hackme
+        run: go run ./cmd/checkpoint verify -dir ../checkpoints-repo/checkpoints -signer HMC-dfc143732a1fc3bc -api https://hackme.tech/pool/api
