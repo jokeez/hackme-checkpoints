@@ -1,0 +1,6 @@
+# Local / publishing leftovers — never commit these
+*.bak
+*.tmp
+*.swp
+*~
+.DS_Store

@@ -10,6 +10,8 @@ There are three independent things you can check. Each one catches a different k
 | 2 | Block hashes vs the live chain | old blocks replaced after publication | Go + internet |
 | 3 | Bitcoin timestamps | checkpoints made up later and back-dated | `ots` client |
 
+---
+
 ## 0. Get the code
 
 ```bash
@@ -18,14 +20,20 @@ git clone https://github.com/jokeez/hackme
 cd hackme
 ```
 
-The verifier is ~250 lines: [`cmd/checkpoint/main.go`](https://github.com/jokeez/hackme/blob/main/cmd/checkpoint/main.go)
-and [`internal/checkpoint/checkpoint.go`](https://github.com/jokeez/hackme/blob/main/internal/checkpoint/checkpoint.go).
+The verifier is small and readable:
+[`cmd/checkpoint/main.go`](https://github.com/jokeez/hackme/blob/main/cmd/checkpoint/main.go)
+and
+[`internal/checkpoint/checkpoint.go`](https://github.com/jokeez/hackme/blob/main/internal/checkpoint/checkpoint.go).
 It reads only the files in `checkpoints/` and, for step 2, public HTTPS.
+
+---
 
 ## 1. Signatures and links (offline)
 
 ```bash
-go run ./cmd/checkpoint verify -dir ../hackme-checkpoints/checkpoints -signer HMC-dfc143732a1fc3bc
+go run ./cmd/checkpoint verify \
+  -dir ../hackme-checkpoints/checkpoints \
+  -signer HMC-dfc143732a1fc3bc
 ```
 
 For every checkpoint, in height order, this checks:
@@ -35,37 +43,55 @@ For every checkpoint, in height order, this checks:
 - every checkpoint is signed by the **same** key;
 - heights strictly increase;
 - `prev_checkpoint_hash` equals the hash of the previous checkpoint (so nothing was removed,
-  inserted or replaced in between).
+  inserted or replaced in between). The first checkpoint may have an empty
+  `prev_checkpoint_hash`.
+
+Expected output shape:
+
+```text
+ok: 2 checkpoints, heights 495097..497672, signer HMC-dfc143732a1fc3bc, chain hackme-dev-mainnet
+```
+
+---
 
 ## 2. Block hashes against the live chain
 
 ```bash
-go run ./cmd/checkpoint verify -dir ../hackme-checkpoints/checkpoints \
-  -signer HMC-dfc143732a1fc3bc -api https://hackme.tech/pool/api
+go run ./cmd/checkpoint verify \
+  -dir ../hackme-checkpoints/checkpoints \
+  -signer HMC-dfc143732a1fc3bc \
+  -api https://hackme.tech/pool/api
 ```
 
-For each checkpoint it asks the public API which block is at that height
-(`GET /pool/api/reports/blocks?q=<height>`) and compares the hash. It also checks the block's
-miner is the checkpoint signer. Add `-last 30` to only check the newest 30.
+For each checkpoint it asks the public API which block is at that height and compares the hash.
+It also checks the block's miner is the checkpoint signer. Add `-last 30` to only check the
+newest 30.
 
-You can do one by hand in a browser:
-`https://hackme.tech/pool/api/reports/blocks?q=493901` → compare `hash` with `block_hash` in
-`checkpoints/0000493901.json`.
+You can do one by hand in a browser — replace the height with any file in `checkpoints/`:
+
+`https://hackme.tech/pool/api/reports/blocks?q=497672`
+
+Compare the response `hash` with `block_hash` in `checkpoints/0000497672.json`.
+
+---
 
 ## 3. Bitcoin timestamps
 
 ```bash
 pip install opentimestamps-client
-ots info    ../hackme-checkpoints/checkpoints/0000493901.json.ots
-ots verify  ../hackme-checkpoints/checkpoints/0000493901.json.ots
+ots info   ../hackme-checkpoints/checkpoints/0000497672.json.ots
+ots verify ../hackme-checkpoints/checkpoints/0000497672.json.ots
 ```
 
-- Right after publishing, proofs are *pending* (calendar servers promise to include them).
-  The node upgrades them in this repo a few hours later, once a Bitcoin block contains them.
+- Right after publishing, proofs may be *pending* (calendar servers promise to include them).
+  The node upgrades them in this repo once a Bitcoin block contains them.
 - `ots verify` needs access to Bitcoin block headers (a local Bitcoin Core node, or see the
-  OpenTimestamps docs for alternatives). It prints the Bitcoin block and the time the file is
-  proven to have existed by.
+  [OpenTimestamps docs](https://opentimestamps.org/) for alternatives). It prints the Bitcoin
+  block and the time the file is proven to have existed by.
 - Changing even one byte of the JSON file makes `ots verify` fail.
+- Always verify the `.ots` that sits next to the matching `.json` — never a `.bak` or copy.
+
+---
 
 ## What the checks do **not** cover
 
@@ -73,6 +99,8 @@ ots verify  ../hackme-checkpoints/checkpoints/0000493901.json.ots
   binding commitment for any future dispute about balances at that height.
 - **Future blocks** — checkpoints protect the past, not who produces the next block.
 - **Gaps** — if a day is missing, that is visible but not "invalid"; ask why on the main repo.
+
+---
 
 ## Found a problem?
 
