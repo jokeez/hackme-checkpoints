@@ -64,7 +64,8 @@ go run ./cmd/checkpoint verify \
 ```
 
 For each checkpoint it asks the public API which block is at that height and compares the hash.
-It also checks the block's miner is the checkpoint signer. Add `-last 30` to only check the
+(The header `miner_address` may be a pool worker under D1 baseline relay — the authority
+signer attests tip+ledger state, not that it mined the block.) Add `-last 30` to only check the
 newest 30.
 
 You can do one by hand in a browser — replace the height with any file in `checkpoints/`:
