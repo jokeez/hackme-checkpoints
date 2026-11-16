@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "chain_id": "hackme-dev-mainnet",
+  "height": 550943,
+  "block_hash": "e50d5c05e12e3d643a6fd827de1bc0c12ecb6c5c82d67a28aa8694e09ee4449a",
+  "block_timestamp_unix": 1794787961,
+  "state_hash": "6a77930d9f8f503cd0fee8861b5429254e453c9f58e8857d4f5e1fbacb3985e7",
+  "accounts": 315,
+  "escrows": 60,
+  "totals": {
+    "econ_order_escrow_units": 920000000,
+    "econ_total_burned_units": 1343843000,
+    "econ_total_minted_units": 5557543000000,
+    "hms_total_burned_units": 0,
+    "hms_total_minted_units": 10500000000000,
+    "sup_total_minted_units": 333547532939
+  },
+  "prev_checkpoint_hash": "636c3da639edda73e22003a02559d5328496a4419d0d118f9aed7701b2747e47",
+  "created_unix": 1794787968,
+  "signer_pubkey_ed25519": "9b02a948b238b4b993bc19cbe4f6f7571682b2024d496f4f293f26cb67ef1683",
+  "signer_address": "HMC-dfc143732a1fc3bc",
+  "sig_ed25519": "36b06addbcb685ec57f4d81736a490649d8f10485295a725a3104926ca11a29244084ff3f90451c4715c7fa91671b91cd0d4fedaf6bbc6f1fe8499d3971a6702"
+}
